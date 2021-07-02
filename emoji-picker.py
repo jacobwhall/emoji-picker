@@ -26,20 +26,24 @@ def main(stdscr):
     stdscr.addstr("> ")
     stdscr.refresh()
 
+    # Get dimensions of terminal
+    rows, cols = stdscr.getmaxyx()
+
     # Create a curses window for user input
-    inputWin = curses.newwin(1, 30, 0, 2)
+    inputWin = curses.newwin(1, cols, 0, 2)
 
     # Make that curses window into a Textbox
     inputLine = Textbox(inputWin)
 
     # Create a curses window for the autocompleted emojis
-    acWin = curses.newwin(1, 60, 3, 2)
+    acWin = curses.newwin(rows, cols, 3, 2)
 
     stdscr.refresh()
     inputWin.refresh()
 
+
     # Width between emojis
-    width = 3
+    width = 5
 
     # Maxmimum row width
     maxwidth = 50
@@ -53,6 +57,8 @@ def main(stdscr):
         # If user inputs a tab or right arrow
         if ch == 9 or ch == 261:
             currentLoc += 1
+            if currentLoc == len(currentEmojis):
+                currentLoc = 0
         # Elif user inputs a left arrow
         elif ch == 260:
             currentLoc -= 1
@@ -68,7 +74,10 @@ def main(stdscr):
             inputWin.refresh()
             acWin.clear()
             currentEmojis = []
+
+	    # Search emojis dict for input
             query = inputLine.gather().strip()
+            currentLoc = 0
             for emoji, keywords in emojis.items():
                 startsWith = False
                 for keyword in keywords:
@@ -76,16 +85,20 @@ def main(stdscr):
                         startsWith = True
                 if startsWith:
                     currentEmojis.append(emoji)
+            acWin.addstr(rows - 5, 0, str(len(currentEmojis)) + " direct matches")
         currentXCoord = 1
         locCount = 0
+        emojirows = (rows - 6) // 2
+        emojicols = (cols - 1) // width
         for emoji in currentEmojis:
-            if locCount == currentLoc:
-                acWin.addstr(0, currentXCoord, emoji, curses.A_STANDOUT)
-            else:
-                acWin.addstr(0, currentXCoord, emoji)
-            currentXCoord += width
-            if currentXCoord > maxwidth:
+            yCoord = (locCount // emojicols) * 2
+            if locCount == (emojirows * emojicols):
                 break
+            xCoord = (locCount % emojicols) * width
+            if locCount == currentLoc:
+                acWin.addstr(yCoord, xCoord, emoji, curses.A_STANDOUT)
+            else:
+                acWin.addstr(yCoord, xCoord, emoji)
             locCount += 1
         acWin.refresh()
 

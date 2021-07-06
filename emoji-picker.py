@@ -73,6 +73,8 @@ def main(stdscr):
         else:
             inputWin.refresh()
             acWin.clear()
+            startWithEmojis = []
+            includeEmojis = []
             currentEmojis = []
 
 	    # Search emojis dict for input
@@ -80,12 +82,22 @@ def main(stdscr):
             currentLoc = 0
             for emoji, keywords in emojis.items():
                 startsWith = False
+                includes = False
                 for keyword in keywords:
-                    if keyword.startswith(query):
-                        startsWith = True
+                    subwords = keyword.split("_")
+                    for subword in subwords:
+                        if subword.startswith(query):
+                            startsWith = True
+                            break
+                        elif query in subword:
+                            includes = True
+                    if startsWith: break
                 if startsWith:
-                    currentEmojis.append(emoji)
-            acWin.addstr(rows - 5, 0, str(len(currentEmojis)) + " direct matches")
+                    startWithEmojis.append(emoji)
+                elif includes:
+                    includeEmojis.append(emoji)
+            currentEmojis = startWithEmojis + includeEmojis
+            acWin.addstr(rows - 5, 0, str(len(currentEmojis)) + " ^ matches, " + str(len(includeEmojis)) + " * matches")
         currentXCoord = 1
         locCount = 0
         emojirows = (rows - 6) // 2
